@@ -1,5 +1,6 @@
 ---
 title: 集群异常 / 告警风暴怎么排查
+kind: howto
 tags: [集群健康, 告警风暴, sre, slo, 噪音, 优先级]
 applies_to: [manager]
 ---

@@ -1,5 +1,6 @@
 ---
 title: TCP Retransmits, Loss, and Resets
+kind: howto
 tags: [tcp, network, retransmit, packet-loss, rst]
 applies_to: [edge, manager]
 ---

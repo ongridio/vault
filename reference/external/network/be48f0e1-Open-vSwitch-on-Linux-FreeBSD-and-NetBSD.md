@@ -1,0 +1,600 @@
+---
+title: Open vSwitch on Linux, FreeBSD and NetBSD¶
+source: http://docs.openvswitch.org/en/latest/intro/install/general/
+kind: external
+domain: network
+original_date: 2023-01-01
+fetched_at: 2026-05-16
+bookmark_title: Open vSwitch on Linux, FreeBSD and NetBSD — Open vSwitch 2.8.90 documentation
+tags: [external, network]
+---
+
+> [!info] 外部文章 · 自动导入
+> 来源：[docs.openvswitch.org](http://docs.openvswitch.org/en/latest/intro/install/general/)
+> 原始日期：2023-01-01
+> 抓取日期：2026-05-16
+
+# Open vSwitch on Linux, FreeBSD and NetBSD¶
+
+# Open vSwitch on Linux, FreeBSD and NetBSD¶
+
+This document describes how to build and install Open vSwitch on a generic Linux, FreeBSD, or NetBSD host. For specifics around installation on a specific platform, refer to one of the other installation guides listed in Installing Open vSwitch.
+
+## Obtaining Open vSwitch Sources¶
+
+The canonical location for Open vSwitch source code is its Git repository, which you can clone into a directory named “ovs” with:
+
+```
+$ git clone https://github.com/openvswitch/ovs.git
+```
+
+Cloning the repository leaves the “main” branch initially checked out. This is the right branch for general development. If, on the other hand, if you want to build a particular released version, you can check it out by running a command such as the following from the “ovs” directory:
+
+```
+$ git checkout v2.7.0
+```
+
+The repository also has a branch for each release series. For example, to obtain the latest fixes in the Open vSwitch 2.7.x release series, which might include bug fixes that have not yet been in any released version, you can check it out from the “ovs” directory with:
+
+```
+$ git checkout origin/branch-2.7
+```
+
+If you do not want to use Git, you can also obtain tarballs for Open vSwitch release versions via http://openvswitch.org/download/, or download a ZIP file for any snapshot from the web interface at https://github.com/openvswitch/ovs.
+
+## Build Requirements¶
+
+To compile the userspace programs in the Open vSwitch distribution, you will need the following software:
+
+GNU make
+
+A C compiler, such as:
+
+GCC 4.6 or later.
+
+Clang 3.4 or later.
+
+MSVC 2013. Refer to Open vSwitch on Windows for additional Windows build instructions.
+
+
+While OVS may be compatible with other compilers, optimal support for atomic operations may be missing, making OVS very slow (see
+
+`lib/ovs-atomic.h`
+
+).libssl, from OpenSSL, is optional but recommended if you plan to connect the Open vSwitch to an OpenFlow controller. libssl is required to establish confidentiality and authenticity in the connections from an Open vSwitch to an OpenFlow controller. If libssl is installed, then Open vSwitch will automatically build with support for it.
+
+libcap-ng, written by Steve Grubb, is optional but recommended. It is required to run OVS daemons as a non-root user with dropped root privileges. If libcap-ng is installed, then Open vSwitch will automatically build with support for it.
+
+Python 3.7 or later.
+
+Unbound library, from http://www.unbound.net, is optional but recommended if you want to enable ovs-vswitchd and other utilities to use DNS names when specifying OpenFlow and OVSDB remotes. If unbound library is already installed, then Open vSwitch will automatically build with support for it. The environment variable OVS_RESOLV_CONF can be used to specify DNS server configuration file (the default file on Linux is /etc/resolv.conf), and environment variable OVS_UNBOUND_CONF can be used to specify the configuration file for unbound.
+
+
+On Linux, you may use the kernel module distributed with the upstream Linux kernel 3.3 or later. You may also use the userspace-only implementation, at some cost in features and performance. Refer to Open vSwitch without Kernel Support for details.
+
+If you are working from a Git tree or snapshot (instead of from a distribution tarball), or if you modify the Open vSwitch build system or the database schema, you will also need the following software:
+
+Autoconf version 2.63 or later.
+
+Automake version 1.10 or later.
+
+libtool version 2.4 or later. (Older versions might work too.)
+
+
+The datapath tests for userspace and Linux datapaths also rely upon:
+
+pyftpdlib. Version 1.2.0 is known to work. Earlier versions should also work.
+
+netcat. Several common implementations are known to work.
+
+curl. Version 7.47.0 is known to work. Earlier versions should also work.
+
+tftpy. Version 0.6.2 is known to work. Earlier versions should also work.
+
+netstat. Available from various distro specific packages
+
+
+The ovs-vswitchd.conf.db(5) manpage will include an E-R diagram, in formats other than plain text, only if you have the following:
+
+dot from graphviz (http://www.graphviz.org/).
+
+
+If you are going to extensively modify Open vSwitch, consider installing the following to obtain better warnings:
+
+“sparse” version 0.6.4 or later (https://git.kernel.org/pub/scm/devel/sparse/sparse.git/).
+
+GNU make.
+
+clang, version 3.4 or later
+
+flake8 (for Python code)
+
+the python packages listed in “python/test_requirements.txt” (compatible with pip). If they are installed, the pytest-based Python unit tests will be run.
+
+
+You may find the ovs-dev script found in `utilities/ovs-dev.py`
+
+useful.
+
+## Installation Requirements¶
+
+The machine you build Open vSwitch on may not be the one you run it on. To simply install and run Open vSwitch you require the following software:
+
+Shared libraries compatible with those used for the build.
+
+On Linux, if you want to use the kernel-based datapath (which is the most common use case), then a kernel with a compatible kernel module. The kernel module is distributed with the upstream Linux kernel 3.3 and later. Open vSwitch features and performance can vary based on the kernel version. Refer to Releases for more information.
+
+For optional support of ingress policing on Linux, the “tc” program from iproute2 (part of all major distributions and available at https://wiki.linuxfoundation.org/networking/iproute2).
+
+Python 3.7 or later.
+
+
+On Linux you should ensure that `/dev/urandom`
+
+exists. To support TAP
+devices, you must also ensure that `/dev/net/tun`
+
+exists.
+
+## Bootstrapping¶
+
+This step is not needed if you have downloaded a released tarball. If you pulled the sources directly from an Open vSwitch Git tree or got a Git tree snapshot, then run boot.sh in the top source directory to build the “configure” script:
+
+```
+$ ./boot.sh
+```
+
+## Configuring¶
+
+Configure the package by running the configure script. You can usually invoke configure without any arguments. For example:
+
+```
+$ ./configure
+```
+
+By default all files are installed under `/usr/local`
+
+. Open vSwitch also
+expects to find its database in `/usr/local/etc/openvswitch`
+
+by default. If
+you want to install all files into, e.g., `/usr`
+
+and `/var`
+
+instead of
+`/usr/local`
+
+and `/usr/local/var`
+
+and expect to use `/etc/openvswitch`
+
+as
+the default database directory, add options as shown here:
+
+```
+$ ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc
+```
+
+Note
+
+Open vSwitch installed with packages like .rpm (e.g. via `yum install`
+
+or
+`rpm -ivh`
+
+) and .deb (e.g. via `apt-get install`
+
+or `dpkg -i`
+
+) use the
+above configure options.
+
+By default, static libraries are built and linked against. If you want to use shared libraries instead:
+
+```
+$ ./configure --enable-shared
+```
+
+To use a specific C compiler for compiling Open vSwitch user programs, also specify it on the configure command line, like so:
+
+```
+$ ./configure CC=gcc-4.2
+```
+
+To use ‘clang’ compiler:
+
+```
+$ ./configure CC=clang
+```
+
+To supply special flags to the C compiler, specify them as `CFLAGS`
+
+on the
+configure command line. If you want the default CFLAGS, which include `-g`
+
+to
+build debug symbols and `-O2`
+
+to enable optimizations, you must include them
+yourself. For example, to build with the default CFLAGS plus `-mssse3`
+
+, you
+might run configure as follows:
+
+```
+$ ./configure CFLAGS="-g -O2 -mssse3"
+```
+
+For efficient hash computation special flags can be passed to leverage built-in
+intrinsics. For example on X86_64 with SSE4.2 instruction set support, CRC32
+intrinsics can be used by passing `-msse4.2`
+
+:
+
+```
+$ ./configure CFLAGS="-g -O2 -msse4.2"`
+```
+
+Also builtin popcnt instruction can be used to speedup the counting of the
+bits set in an integer. For example on X86_64 with POPCNT support, it can be
+enabled by passing `-mpopcnt`
+
+:
+
+```
+$ ./configure CFLAGS="-g -O2 -mpopcnt"`
+```
+
+If you are on a different processor and don’t know what flags to choose, it is
+recommended to use `-march=native`
+
+settings:
+
+```
+$ ./configure CFLAGS="-g -O2 -march=native"
+```
+
+With this, GCC will detect the processor and automatically set appropriate flags for it. This should not be used if you are compiling OVS outside the target machine.
+
+If you are a developer and want to enable Address Sanitizer for debugging
+purposes, at about a 2x runtime cost, you can add
+`-fsanitize=address -fno-omit-frame-pointer -fno-common`
+
+to CFLAGS. For
+example:
+
+```
+$ ./configure CFLAGS="-g -O2 -fsanitize=address -fno-omit-frame-pointer -fno-common"
+```
+
+If you plan to do much Open vSwitch development, you might want to add
+`--enable-Werror`
+
+, which adds the `-Werror`
+
+option to the compiler command
+line, turning warnings into errors. That makes it impossible to miss warnings
+generated by the build. For example:
+
+```
+$ ./configure --enable-Werror
+```
+
+If you’re building with GCC, then, for improved warnings, install `sparse`
+
+(see “Prerequisites”) and enable it for the build by adding
+`--enable-sparse`
+
+. Use this with `--enable-Werror`
+
+to avoid missing both
+compiler and `sparse`
+
+warnings, e.g.:
+
+```
+$ ./configure --enable-Werror --enable-sparse
+```
+
+To build with gcov code coverage support, add `--enable-coverage`
+
+:
+
+```
+$ ./configure --enable-coverage
+```
+
+The configure script accepts a number of other options and honors additional
+environment variables. For a full list, invoke configure with the `--help`
+
+option:
+
+```
+$ ./configure --help
+```
+
+You can also run configure from a separate build directory. This is helpful if you want to build Open vSwitch in more than one way from a single source directory, e.g. to try out both GCC and Clang builds. For example:
+
+```
+$ mkdir _gcc && (cd _gcc && ./configure CC=gcc)
+$ mkdir _clang && (cd _clang && ./configure CC=clang)
+```
+
+Under certain loads the ovsdb-server and other components perform better when using the jemalloc memory allocator, instead of the glibc memory allocator. If you wish to link with jemalloc add it to LIBS:
+
+```
+$ ./configure LIBS=-ljemalloc
+```
+
+Note
+
+Linking Open vSwitch with the jemalloc shared library may not work as
+expected in certain operating system development environments. You can
+override the automatic compiler decision to avoid possible linker issues by
+passing `-fno-lto`
+
+or `-fno-builtin`
+
+flag since the jemalloc override
+standard built-in memory allocation functions such as malloc, calloc, etc.
+Both options can solve possible jemalloc linker issues with pros and cons for
+each case, feel free to choose the path that appears best to you. Disabling
+LTO flag example:
+
+```
+$ ./configure LIBS=-ljemalloc CFLAGS="-g -O2 -fno-lto"
+```
+
+Disabling built-in flag example:
+
+```
+$ ./configure LIBS=-ljemalloc CFLAGS="-g -O2 -fno-builtin"
+```
+
+## Building¶
+
+Run GNU make in the build directory, e.g.:
+
+$ make
+
+or if GNU make is installed as “gmake”:
+
+$ gmake
+
+If you used a separate build directory, run make or gmake from that directory, e.g.:
+
+$ make -C _gcc $ make -C _clang
+
+Note
+
+Some versions of Clang and ccache are not completely compatible. If you see unusual warnings when you use both together, consider disabling ccache.
+
+Consider running the testsuite. Refer to Testing for instructions.
+
+Run
+
+`make install`
+
+to install the executables and manpages into the running system, by default under`/usr/local`
+
+:$ make install
+
+
+## Starting¶
+
+On Unix-alike systems, such as BSDs and Linux, starting the Open vSwitch suite of daemons is a simple process. Open vSwitch includes a shell script, and helpers, called ovs-ctl which automates much of the tasks for starting and stopping ovsdb-server, and ovs-vswitchd. After installation, the daemons can be started by using the ovs-ctl utility. This will take care to setup initial conditions, and start the daemons in the correct order. The ovs-ctl utility is located in ‘$(pkgdatadir)/scripts’, and defaults to ‘/usr/local/share/openvswitch/scripts’. An example after install might be:
+
+```
+$ export PATH=$PATH:/usr/local/share/openvswitch/scripts
+$ ovs-ctl start
+```
+
+Additionally, the ovs-ctl script allows starting / stopping the daemons individually using specific options. To start just the ovsdb-server:
+
+```
+$ export PATH=$PATH:/usr/local/share/openvswitch/scripts
+$ ovs-ctl --no-ovs-vswitchd start
+```
+
+Likewise, to start just the ovs-vswitchd:
+
+```
+$ export PATH=$PATH:/usr/local/share/openvswitch/scripts
+$ ovs-ctl --no-ovsdb-server start
+```
+
+Refer to ovs-ctl(8) for more information on ovs-ctl.
+
+In addition to using the automated script to start Open vSwitch, you may wish to manually start the various daemons. Before starting ovs-vswitchd itself, you need to start its configuration database, ovsdb-server. Each machine on which Open vSwitch is installed should run its own copy of ovsdb-server. Before ovsdb-server itself can be started, configure a database that it can use:
+
+```
+$ mkdir -p /usr/local/etc/openvswitch
+$ ovsdb-tool create /usr/local/etc/openvswitch/conf.db \
+vswitchd/vswitch.ovsschema
+```
+
+Configure ovsdb-server to use database created above, to listen on a Unix domain socket, to connect to any managers specified in the database itself, and to use the SSL/TLS configuration in the database:
+
+```
+$ mkdir -p /usr/local/var/run/openvswitch
+$ ovsdb-server --remote=punix:/usr/local/var/run/openvswitch/db.sock \
+--remote=db:Open_vSwitch,Open_vSwitch,manager_options \
+--private-key=db:Open_vSwitch,SSL,private_key \
+--certificate=db:Open_vSwitch,SSL,certificate \
+--bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert \
+--pidfile --detach --log-file
+```
+
+Note
+
+If you built Open vSwitch without SSL/TLS support, then omit
+`--private-key`
+
+, `--certificate`
+
+, and `--bootstrap-ca-cert`
+
+.)
+
+Initialize the database using ovs-vsctl. This is only necessary the first time after you create the database with ovsdb-tool, though running it at any time is harmless:
+
+```
+$ ovs-vsctl --no-wait init
+```
+
+Start the main Open vSwitch daemon, telling it to connect to the same Unix domain socket:
+
+```
+$ ovs-vswitchd --pidfile --detach --log-file
+```
+
+## Starting OVS in container¶
+
+For ovs vswitchd, we need to load ovs kernel modules on host.
+
+Hence, OVS containers kernel version needs to be same as that of host kernel.
+
+Export following variables in .env and place it under project root:
+
+```
+$ OVS_BRANCH=<BRANCH>
+$ OVS_VERSION=<VERSION>
+$ DISTRO=<LINUX_DISTRO>
+$ KERNEL_VERSION=<LINUX_KERNEL_VERSION>
+$ GITHUB_SRC=<GITHUB_URL>
+$ DOCKER_REPO=<REPO_TO_PUSH_IMAGE>
+```
+
+To build ovs modules:
+
+```
+$ cd utilities/docker
+$ make build
+```
+
+Compiled Modules will be tagged with docker image
+
+To Push ovs modules:
+
+```
+$ make push
+```
+
+OVS docker image will be pushed to specified docker repo.
+
+Start ovsdb-server using below command:
+
+```
+$ docker run -itd --net=host --name=ovsdb-server \
+<docker_repo>:<tag> ovsdb-server
+```
+
+Start ovs-vswitchd with privileged mode as it needs to load kernel module in host using below command:
+
+```
+$ docker run -itd --net=host --name=ovs-vswitchd \
+--volumes-from=ovsdb-server -v /lib:/lib --privileged \
+<docker_repo>:<tag> ovs-vswitchd
+```
+
+Note
+
+The debian docker file uses ubuntu 16.04 as a base image for reference.
+
+User can use any other base image for debian, e.g. u14.04, etc.
+
+RHEL based docker build support needs to be added.
+
+## Validating¶
+
+At this point you can use ovs-vsctl to set up bridges and other Open vSwitch
+features. For example, to create a bridge named `br0`
+
+and add ports `eth0`
+
+and `vif1.0`
+
+to it:
+
+```
+$ ovs-vsctl add-br br0
+$ ovs-vsctl add-port br0 eth0
+$ ovs-vsctl add-port br0 vif1.0
+```
+
+Refer to ovs-vsctl(8) for more details. You may also wish to refer to Testing for information on more generic testing of OVS.
+
+When using ovs in container, exec to container to run above commands:
+
+```
+$ docker exec -it <ovsdb-server/ovs-vswitchd> /bin/bash
+```
+
+## Upgrading¶
+
+When you upgrade Open vSwitch from one version to another you should also upgrade the database schema:
+
+Note
+
+The following manual steps may also be accomplished by using ovs-ctl to stop and start the daemons after upgrade. The ovs-ctl script will automatically upgrade the schema.
+
+Stop the Open vSwitch daemons, e.g.:
+
+$ kill `cd /usr/local/var/run/openvswitch && cat ovsdb-server.pid ovs-vswitchd.pid`
+
+Install the new Open vSwitch release by using the same configure options as was used for installing the previous version. If you do not use the same configure options, you can end up with two different versions of Open vSwitch executables installed in different locations.
+
+Upgrade the database, in one of the following two ways:
+
+If there is no important data in your database, then you may delete the database file and recreate it with ovsdb-tool, following the instructions under “Building and Installing Open vSwitch for Linux, FreeBSD or NetBSD”.
+
+If you want to preserve the contents of your database, back it up first, then use
+
+`ovsdb-tool convert`
+
+to upgrade it, e.g.:$ ovsdb-tool convert /usr/local/etc/openvswitch/conf.db \ vswitchd/vswitch.ovsschema
+
+
+Start the Open vSwitch daemons as described under Starting above.
+
+
+## Hot Upgrading¶
+
+Upgrading Open vSwitch from one version to the next version with minimum disruption of traffic going through the system that is using that Open vSwitch needs some considerations:
+
+If the upgrade only involves upgrading the userspace utilities and daemons of Open vSwitch, make sure that the new userspace version is compatible with the previously loaded kernel module.
+
+An upgrade of userspace daemons means that they have to be restarted. Restarting the daemons means that the OpenFlow flows in the ovs-vswitchd daemon will be lost. One way to restore the flows is to let the controller re-populate it. Another way is to save the previous flows using a utility like ovs-ofctl and then re-add them after the restart. Restoring the old flows is accurate only if the new Open vSwitch interfaces retain the old ‘ofport’ values.
+
+When the new userspace daemons get restarted, they automatically flush the old flows setup in the kernel. This can be expensive if there are hundreds of new flows that are entering the kernel but userspace daemons are busy setting up new userspace flows from either the controller or an utility like ovs-ofctl. Open vSwitch database provides an option to solve this problem through the
+
+`other_config:flow-restore-wait`
+
+column of the`Open_vSwitch`
+
+table. Refer to the ovs-vswitchd.conf.db(5) manpage for details.If the upgrade also involves upgrading the kernel module, the old kernel module needs to be unloaded and the new kernel module should be loaded. This means that the kernel network devices belonging to Open vSwitch is recreated and the kernel flows are lost. The downtime of the traffic can be reduced if the userspace daemons are restarted immediately and the userspace flows are restored as soon as possible.
+
+When upgrading ovs running in container on host that is managed by ovn, simply stop the docker container, remove and re-run with new docker image that has newer ovs version.
+
+When running ovs in container, if ovs is used in bridged mode where management interface is managed by ovs, docker restart will result in loss of network connectivity. Hence, make sure to delete the bridge mapping of physical interface from ovs, upgrade ovs via docker and then add back the interface to ovs bridge. This mapping need not be deleted in case of multi nics if management interface is not managed by ovs.
+
+
+The ovs-ctl utility’s `restart`
+
+function only restarts the userspace daemons,
+makes sure that the ‘ofport’ values remain consistent across restarts, restores
+userspace flows using the ovs-ofctl utility and also uses the
+`other_config:flow-restore-wait`
+
+column to keep the traffic downtime to the
+minimum. The ovs-ctl utility’s `force-reload-kmod`
+
+function does all of the
+above, but also replaces the old kernel module with the new one. Open vSwitch
+startup scripts for Debian and RHEL use ovs-ctl’s functions and it is
+recommended that these functions be used for other software platforms too.
+
+## Reporting Bugs¶
+
+Report problems to bugs@openvswitch.org.

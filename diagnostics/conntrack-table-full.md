@@ -1,5 +1,6 @@
 ---
 title: Conntrack Table Full — Short-Connection Storms and Drops
+kind: howto
 tags: [conntrack, netfilter, nat, packet-drop, short-conn]
 applies_to: [edge, manager]
 ---

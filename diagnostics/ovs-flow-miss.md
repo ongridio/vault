@@ -1,5 +1,6 @@
 ---
 title: Open vSwitch — Why Isn't a Flow Matching
+kind: howto
 tags: [ovs, openvswitch, flow-table, vxlan, vlan, mac-learning]
 applies_to: [edge]
 ---

@@ -1,5 +1,6 @@
 ---
 title: 服务挂了 / systemd 失败怎么排查
+kind: howto
 tags: [systemd, systemctl, journalctl, 服务, 进程]
 applies_to: [edge, manager]
 ---

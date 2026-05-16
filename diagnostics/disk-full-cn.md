@@ -1,5 +1,6 @@
 ---
 title: 磁盘满了怎么排查
+kind: howto
 tags: [磁盘, disk, inode, du, df, 清理]
 applies_to: [edge, manager]
 ---

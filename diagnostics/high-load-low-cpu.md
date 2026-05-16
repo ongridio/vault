@@ -1,5 +1,6 @@
 ---
 title: High Load Average But Low CPU
+kind: howto
 tags: [cpu, load, io-wait, scheduler, d-state]
 applies_to: [edge, manager]
 ---

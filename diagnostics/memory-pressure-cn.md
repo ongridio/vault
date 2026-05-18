@@ -1,5 +1,6 @@
 ---
 title: 内存高 / OOM 怎么排查
+kind: howto
 tags: [内存, memory, oom, swap, cache, cgroup]
 applies_to: [edge, manager]
 ---

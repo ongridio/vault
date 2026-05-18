@@ -1,5 +1,6 @@
 ---
 title: 网络慢 / 连不通怎么排查
+kind: howto
 tags: [网络, tcp, dns, mtu, conntrack, iptables, 丢包]
 applies_to: [edge, manager]
 ---

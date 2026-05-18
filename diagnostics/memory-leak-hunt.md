@@ -1,5 +1,6 @@
 ---
 title: Memory Leak — From RSS Growth to Pmap
+kind: howto
 tags: [memory, leak, rss, pmap, valgrind, jemalloc]
 applies_to: [edge, manager]
 ---
